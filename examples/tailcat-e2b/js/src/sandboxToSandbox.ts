@@ -1,12 +1,10 @@
 /**
- * Two E2B sandboxes exchange data directly, without going through the orchestrator.
+ * Two E2B sandboxes exchange encrypted data through Tailcat's DERP relay.
  *
  * The producer sandbox generates a dataset and serves a read-write directory.
  * The consumer sandbox pulls the dataset over Tailcat, analyzes it, and pushes
  * a JSON report back into the producer's directory. The orchestrator only passes
- * the producer's address to the consumer. Once NAT traversal completes, the two
- * sandboxes talk peer to peer inside E2B's network (about 1 to 2 ms), otherwise
- * via the DERP relay.
+ * the producer's address to the consumer; file bytes do not pass through it.
  */
 import "dotenv/config";
 import { setTimeout as delay } from "node:timers/promises";
@@ -14,7 +12,7 @@ import {
   computeSandboxMd5,
   createSandbox,
   createSandboxCommandRunner,
-  describeNetworkPath,
+  describeConnection,
   formatMegabitsPerSecond,
   requireSuccessfulCommand,
   runSandboxCommand,
@@ -23,7 +21,7 @@ import {
   waitUntilReachable,
 } from "./tailcatRuntime";
 
-const FILE_SIZE_MIB = 100;
+const FILE_SIZE_MIB = Number(process.env.DEMO_FILE_SIZE_MIB ?? 10);
 const FILE_SIZE_BYTES = FILE_SIZE_MIB * 1024 * 1024;
 
 const producerSandbox = await createSandbox();
@@ -44,7 +42,7 @@ try {
     await waitUntilReachable(runInConsumer, sharedDirectoryServer.address);
     console.log(
       "[consumer] " +
-        (await describeNetworkPath(
+        (await describeConnection(
           runInConsumer,
           sharedDirectoryServer.address,
         )),

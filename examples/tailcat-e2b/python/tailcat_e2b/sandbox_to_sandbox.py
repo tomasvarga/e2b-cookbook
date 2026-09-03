@@ -1,13 +1,12 @@
-"""Two E2B sandboxes exchange data directly, without going through the orchestrator.
+"""Two E2B sandboxes exchange encrypted data through Tailcat's DERP relay.
 
 The producer sandbox generates a dataset and serves a read-write directory.
 The consumer sandbox pulls the dataset over Tailcat, analyzes it, and pushes
 a JSON report back into the producer's directory. The orchestrator only passes
-the producer's address to the consumer. Once NAT traversal completes, the two
-sandboxes talk peer to peer inside E2B's network (about 1 to 2 ms), otherwise
-via the DERP relay.
+the producer's address to the consumer; file bytes do not pass through it.
 """
 
+import os
 import time
 
 from dotenv import load_dotenv
@@ -16,7 +15,7 @@ from .tailcat_runtime import (
     compute_sandbox_md5,
     create_sandbox,
     create_sandbox_command_runner,
-    describe_network_path,
+    describe_connection,
     format_megabits_per_second,
     require_successful_command,
     run_sandbox_command,
@@ -25,7 +24,7 @@ from .tailcat_runtime import (
     wait_until_reachable,
 )
 
-FILE_SIZE_MIB = 100
+FILE_SIZE_MIB = int(os.environ.get("DEMO_FILE_SIZE_MIB", "10"))
 FILE_SIZE_BYTES = FILE_SIZE_MIB * 1024 * 1024
 
 
@@ -46,7 +45,7 @@ def main() -> None:
             # Consumer: connect using only the address string.
             run_in_consumer = create_sandbox_command_runner(consumer_sandbox, timeout_seconds=300)
             wait_until_reachable(run_in_consumer, shared_directory_server.address)
-            print("[consumer] " + describe_network_path(run_in_consumer, shared_directory_server.address))
+            print("[consumer] " + describe_connection(run_in_consumer, shared_directory_server.address))
 
             directory_listing = run_in_consumer(f"tailcat ls -l {shared_directory_server.address}")
             require_successful_command(directory_listing)

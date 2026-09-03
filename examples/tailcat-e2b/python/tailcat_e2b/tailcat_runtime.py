@@ -2,8 +2,8 @@
 
 A Tailcat *server* (listener) prints an address; a Tailcat *client* connects to
 it. Both sides can live in a sandbox or on the laptop. This module hides the
-three things that are easy to get wrong: reading the address, waiting until the
-server is actually reachable, and turning on direct paths.
+two things that are easy to get wrong: reading the address and waiting until
+the server is actually reachable through the DERP relay.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from typing import Callable
 
 from e2b import CommandExitException, Sandbox
 
-from .template import ENABLE_DIRECT_PATHS_CMD, TAILCAT_URL, TEMPLATE_ALIAS
+from .template import TAILCAT_URL, TEMPLATE_ALIAS
 
 # A Tailcat address looks like `tco2FwWCD...`: the prefix `tc` followed by base64url.
 TAILCAT_ADDRESS_PATTERN = re.compile(r"\btc[A-Za-z0-9_-]{20,}")
@@ -60,14 +60,11 @@ class TailcatServer:
 
 
 def create_sandbox(timeout_seconds: int = 600) -> Sandbox:
-    """Create a sandbox with Tailcat installed and direct paths enabled."""
+    """Create a sandbox with Tailcat installed."""
     started_at = time.time()
     sandbox = _create_sandbox_from_template_or_fallback(timeout_seconds)
     print(f"[{sandbox.sandbox_id}] sandbox ready in {time.time() - started_at:.1f}s")
 
-    # Idempotent: the template's start command already does this, but sandboxes
-    # made from other templates need it too. See README, "Quirks".
-    sandbox.commands.run(ENABLE_DIRECT_PATHS_CMD)
     return sandbox
 
 
@@ -228,17 +225,14 @@ def wait_until_reachable(run_command: CommandRunner, address: str, timeout_secon
     raise RuntimeError(f"tailcat server {_abbreviate(address)} not reachable after {timeout_seconds}s")
 
 
-def describe_network_path(run_command: CommandRunner, address: str, timeout: str = "20s") -> str:
-    """Ping until a direct path forms and describe the result: relay latency, direct latency, or neither."""
-    ping = run_command(f"tailcat ping --until-direct --timeout {timeout} {address}")
-    pong_lines = [line for line in ping.output.splitlines() if "pong in" in line]
-    relay_latency = next((line.split("pong in ")[1] for line in pong_lines if "DERP" in line), None)
-    direct_latency = next((line.split("pong in ")[1] for line in pong_lines if "DERP" not in line), None)
-    if direct_latency:
-        return f"direct path: {direct_latency}" + (f" (relay was {relay_latency})" if relay_latency else "")
-    if relay_latency:
-        return f"relay only: {relay_latency} (no direct path within {timeout})"
-    return f"no pong: {ping.output.strip()[-200:]}"
+def describe_connection(run_command: CommandRunner, address: str, timeout: str = "5s") -> str:
+    """Ping once and describe the Tailcat connection."""
+    ping = run_command(f"tailcat ping --timeout {timeout} {address}")
+    pong_line = next((line for line in ping.output.splitlines() if "pong in" in line), None)
+    if not pong_line:
+        return f"no pong: {ping.output.strip()[-200:]}"
+    latency = pong_line.split("pong in ", maxsplit=1)[-1]
+    return f"DERP relay: {latency}" if "DERP" in pong_line else f"Tailcat connection: {latency}"
 
 
 # ---------------------------------------------------------------------------

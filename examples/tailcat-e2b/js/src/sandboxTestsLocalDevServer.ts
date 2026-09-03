@@ -22,7 +22,7 @@ import {
   type CommandRunner,
   createSandbox,
   createSandboxCommandRunner,
-  describeNetworkPath,
+  describeConnection,
   requireSuccessfulCommand,
   startLocalTailcatServer,
   waitUntilReachable,
@@ -144,7 +144,7 @@ try {
     await waitUntilReachable(runInSandbox, laptopTailcatServer.address);
     console.log(
       "[sandbox] " +
-        (await describeNetworkPath(runInSandbox, laptopTailcatServer.address)),
+        (await describeConnection(runInSandbox, laptopTailcatServer.address)),
     );
     console.log("\nTesting the development server on your laptop...\n");
 

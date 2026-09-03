@@ -3,8 +3,7 @@
  *
  * Upload:   the sandbox runs `tailcat recv` (a write-only drop box), the laptop runs `tailcat cp`.
  * Download: the sandbox runs `tailcat serve files` (read-only), the laptop runs `tailcat ls` and `tailcat cp`.
- * Bytes flow over an encrypted WireGuard tunnel, relayed through DERP until a
- * direct UDP path forms, and never touch the E2B API.
+ * Bytes flow over WireGuard through a DERP relay and never touch the E2B API.
  */
 import "dotenv/config";
 import { execFileSync } from "node:child_process";
@@ -17,7 +16,7 @@ import {
   computeLocalMd5,
   computeSandboxMd5,
   createSandbox,
-  describeNetworkPath,
+  describeConnection,
   formatMegabitsPerSecond,
   localCommandRunner,
   requireLocalTailcat,
@@ -48,7 +47,7 @@ async function uploadToSandbox(
     await waitUntilReachable(localCommandRunner, uploadReceiver.address);
     console.log(
       "[laptop] " +
-        (await describeNetworkPath(localCommandRunner, uploadReceiver.address)),
+        (await describeConnection(localCommandRunner, uploadReceiver.address)),
     );
 
     const startedAt = Date.now();

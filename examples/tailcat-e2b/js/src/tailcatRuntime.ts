@@ -3,8 +3,8 @@
  *
  * A Tailcat *server* (listener) prints an address; a Tailcat *client* connects
  * to it. Both sides can live in a sandbox or on the laptop. This module hides
- * the three things that are easy to get wrong: reading the address, waiting
- * until the server is actually reachable, and turning on direct paths.
+ * the two things that are easy to get wrong: reading the address and waiting
+ * until the server is actually reachable through the DERP relay.
  */
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -13,11 +13,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { CommandExitError, Sandbox } from "e2b";
-import {
-  ENABLE_DIRECT_PATHS_CMD,
-  TAILCAT_URL,
-  TEMPLATE_ALIAS,
-} from "../template/template";
+import { TAILCAT_URL, TEMPLATE_ALIAS } from "../template/template";
 
 /** A Tailcat address looks like `tco2FwWCD...`: the prefix `tc` followed by base64url. */
 const TAILCAT_ADDRESS_PATTERN = /\btc[A-Za-z0-9_-]{20,}/;
@@ -45,7 +41,7 @@ export interface TailcatServer {
 // Sandboxes
 // ---------------------------------------------------------------------------
 
-/** Create a sandbox with Tailcat installed and direct paths enabled. */
+/** Create a sandbox with Tailcat installed. */
 export async function createSandbox(timeoutMs = 600_000): Promise<Sandbox> {
   const startedAt = Date.now();
   const sandbox = await createSandboxFromTemplateOrFallback(timeoutMs);
@@ -54,9 +50,6 @@ export async function createSandbox(timeoutMs = 600_000): Promise<Sandbox> {
     `[${sandbox.sandboxId}] sandbox ready in ${elapsedSeconds.toFixed(1)}s`,
   );
 
-  // Idempotent: the template's start command already does this, but sandboxes
-  // made from other templates need it too. See README, "Quirks".
-  await sandbox.commands.run(ENABLE_DIRECT_PATHS_CMD);
   return sandbox;
 }
 
@@ -285,36 +278,23 @@ export async function waitUntilReachable(
   );
 }
 
-/** Ping until a direct path forms and describe the result: relay latency, direct latency, or neither. */
-export async function describeNetworkPath(
+/** Ping once and describe the Tailcat connection. */
+export async function describeConnection(
   runCommand: CommandRunner,
   address: string,
-  timeout = "20s",
+  timeout = "5s",
 ): Promise<string> {
-  const ping = await runCommand(
-    `tailcat ping --until-direct --timeout ${timeout} ${address}`,
-  );
-  const pongLines = ping.output
+  const ping = await runCommand(`tailcat ping --timeout ${timeout} ${address}`);
+  const pongLine = ping.output
     .split("\n")
-    .filter((line) => line.includes("pong in"));
-  const latencyOf = (line?: string): string | undefined =>
-    line?.split("pong in ")[1];
-  const relayLatency = latencyOf(
-    pongLines.find((line) => line.includes("DERP")),
-  );
-  const directLatency = latencyOf(
-    pongLines.find((line) => !line.includes("DERP")),
-  );
-  if (directLatency) {
-    return (
-      `direct path: ${directLatency}` +
-      (relayLatency ? ` (relay was ${relayLatency})` : "")
-    );
+    .find((line) => line.includes("pong in"));
+  if (!pongLine) {
+    return `no pong: ${ping.output.trim().slice(-200)}`;
   }
-  if (relayLatency) {
-    return `relay only: ${relayLatency} (no direct path within ${timeout})`;
-  }
-  return `no pong: ${ping.output.trim().slice(-200)}`;
+  const latency = pongLine.split("pong in ")[1] ?? pongLine.trim();
+  return pongLine.includes("DERP")
+    ? `DERP relay: ${latency}`
+    : `Tailcat connection: ${latency}`;
 }
 
 // ---------------------------------------------------------------------------

@@ -52,13 +52,13 @@
 <rect x="110" y="650" width="420" height="260" rx="6" fill="#151b22" stroke="#d8dee8" stroke-width="2"/>
 <text x="130" y="680" font-family="monospace" font-size="16" fill="#b7c0cc">ACTOR</text>
 <text x="130" y="715" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#ffffff">Producer sandbox</text>
-<text x="130" y="750" font-family="monospace" font-size="18" fill="#8b96a3">dataset.bin · 100 MiB</text>
+<text x="130" y="750" font-family="monospace" font-size="18" fill="#8b96a3">dataset.bin · 10 MiB</text>
 <text x="130" y="778" font-family="monospace" font-size="18" fill="#8b96a3">receives report + logs</text>
 
 <rect x="790" y="650" width="420" height="260" rx="6" fill="#241b19" stroke="#ff8748" stroke-width="2"/>
-<text x="810" y="680" font-family="monospace" font-size="16" fill="#ff8748">DIRECT</text>
-<text x="810" y="715" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#ffffff">Tailcat peer-to-peer</text>
-<text x="810" y="750" font-family="monospace" font-size="18" fill="#8b96a3">no laptop Tailcat required</text>
+<text x="810" y="680" font-family="monospace" font-size="16" fill="#ff8748">RELAY</text>
+<text x="810" y="715" font-family="Arial, sans-serif" font-size="26" font-weight="bold" fill="#ffffff">Tailcat via DERP</text>
+<text x="810" y="750" font-family="monospace" font-size="18" fill="#8b96a3">WireGuard encrypted end to end</text>
 
 <rect x="1470" y="650" width="420" height="260" rx="6" fill="#151b22" stroke="#d8dee8" stroke-width="2"/>
 <text x="1490" y="680" font-family="monospace" font-size="16" fill="#b7c0cc">ACTOR</text>

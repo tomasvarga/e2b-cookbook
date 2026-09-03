@@ -23,7 +23,7 @@ from .tailcat_runtime import (
     CommandRunner,
     create_sandbox,
     create_sandbox_command_runner,
-    describe_network_path,
+    describe_connection,
     require_successful_command,
     start_local_tailcat_server,
     wait_until_reachable,
@@ -118,7 +118,7 @@ def main() -> None:
         laptop_tailcat_server = start_local_tailcat_server(f"serve --allow={sandbox_client_public_key} {LOCAL_PORT}")
         try:
             wait_until_reachable(run_in_sandbox, laptop_tailcat_server.address)
-            print("[sandbox] " + describe_network_path(run_in_sandbox, laptop_tailcat_server.address))
+            print("[sandbox] " + describe_connection(run_in_sandbox, laptop_tailcat_server.address))
             print("\nTesting the development server on your laptop...\n")
 
             test_through_socks(run_in_sandbox, laptop_tailcat_server.address)

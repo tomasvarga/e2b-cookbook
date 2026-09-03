@@ -9,7 +9,7 @@ Set Padding 20
 Set TypingSpeed 25ms
 Set PlaybackSpeed 1.1
 
-Type "echo 'Tailcat: direct sandbox-to-sandbox data transfer'"
+Type "echo 'Tailcat: encrypted sandbox-to-sandbox transfer via DERP'"
 Enter
 Sleep 1s
 Type "npm --prefix ../js run sandbox-to-sandbox"

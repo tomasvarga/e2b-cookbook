@@ -2,8 +2,7 @@
 
 Upload:   the sandbox runs `tailcat recv` (a write-only drop box), the laptop runs `tailcat cp`.
 Download: the sandbox runs `tailcat serve files` (read-only), the laptop runs `tailcat ls` and `tailcat cp`.
-Bytes flow over an encrypted WireGuard tunnel, relayed through DERP until a
-direct UDP path forms, and never touch the E2B API.
+Bytes flow over WireGuard through a DERP relay and never touch the E2B API.
 """
 
 import json
@@ -19,7 +18,7 @@ from .tailcat_runtime import (
     compute_local_md5,
     compute_sandbox_md5,
     create_sandbox,
-    describe_network_path,
+    describe_connection,
     format_megabits_per_second,
     local_command_runner,
     require_local_tailcat,
@@ -41,7 +40,7 @@ def upload_to_sandbox(sandbox: Sandbox, local_file: str, local_input_md5: str) -
     upload_receiver = start_sandbox_tailcat_server(sandbox, "recv /home/user/inbox", "recv")
     try:
         wait_until_reachable(local_command_runner, upload_receiver.address)
-        print("[laptop] " + describe_network_path(local_command_runner, upload_receiver.address))
+        print("[laptop] " + describe_connection(local_command_runner, upload_receiver.address))
 
         started_at = time.time()
         run_local_tailcat("cp", local_file, f"{upload_receiver.address}:")
