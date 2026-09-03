@@ -5,24 +5,25 @@ Download: the sandbox runs `tailcat serve files` (read-only), the laptop runs `t
 Bytes flow over WireGuard through a DERP relay and never touch the E2B API.
 """
 
+import hashlib
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 
 from dotenv import load_dotenv
 from e2b import Sandbox
 
-from .tailcat_runtime import (
-    compute_local_md5,
-    compute_sandbox_md5,
+from .e2b_sandbox import (
+    CommandResult,
+    assert_command_succeeded,
     create_sandbox,
-    describe_connection,
-    format_megabits_per_second,
-    local_command_runner,
+    run_sandbox_command,
+)
+from .tailcat_server import (
     require_local_tailcat,
-    seconds_since,
     start_sandbox_tailcat_server,
     wait_until_reachable,
 )
@@ -35,23 +36,46 @@ def run_local_tailcat(*tailcat_arguments: str) -> None:
     subprocess.run(["tailcat", *tailcat_arguments], check=True)
 
 
+def run_local_command(command: str) -> CommandResult:
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    return CommandResult(result.returncode, result.stdout + result.stderr)
+
+
+def compute_local_md5(path: str) -> str:
+    digest = hashlib.md5()
+    with open(path, "rb") as file:
+        while chunk := file.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def compute_sandbox_md5(sandbox: Sandbox, path: str) -> str:
+    result = run_sandbox_command(sandbox, f"md5sum {path}")
+    assert_command_succeeded(result)
+    return result.output.split()[0]
+
+
+def transfer_speed(size_bytes: int, seconds: float) -> str:
+    return f"{size_bytes * 8 / seconds / 1e6:.0f} Mbit/s"
+
+
 def upload_to_sandbox(sandbox: Sandbox, local_file: str, local_input_md5: str) -> None:
     sandbox.commands.run("mkdir -p /home/user/inbox")
     upload_receiver = start_sandbox_tailcat_server(sandbox, "recv /home/user/inbox", "recv")
     try:
-        wait_until_reachable(local_command_runner, upload_receiver.address)
-        print("[laptop] " + describe_connection(local_command_runner, upload_receiver.address))
+        connection = wait_until_reachable(run_local_command, upload_receiver.address)
+        print(f"[laptop] {connection}")
 
         started_at = time.time()
         run_local_tailcat("cp", local_file, f"{upload_receiver.address}:")
-        elapsed_seconds = seconds_since(started_at)
+        elapsed_seconds = time.time() - started_at
 
         checksum_matches = compute_sandbox_md5(sandbox, "/home/user/inbox/input.bin") == local_input_md5
         if not checksum_matches:
             raise RuntimeError("the uploaded file checksum does not match the local file")
         print(
             f"[laptop -> sandbox] {FILE_SIZE_MIB} MiB in {elapsed_seconds:.1f}s "
-            f"({format_megabits_per_second(FILE_SIZE_BYTES, elapsed_seconds)}), md5 ok"
+            f"({transfer_speed(FILE_SIZE_BYTES, elapsed_seconds)}), md5 ok"
         )
     finally:
         upload_receiver.stop()
@@ -73,14 +97,14 @@ def download_from_sandbox(sandbox: Sandbox, working_directory: str, local_input_
     sandbox.commands.run(prepare_results_command)
     download_server = start_sandbox_tailcat_server(sandbox, "serve --files=/home/user/results:ro files", "files")
     try:
-        wait_until_reachable(local_command_runner, download_server.address)
+        wait_until_reachable(run_local_command, download_server.address)
 
         print("[laptop] tailcat ls -l <sandbox>:")
         run_local_tailcat("ls", "-l", download_server.address)
 
         started_at = time.time()
         run_local_tailcat("cp", f"{download_server.address}:output.bin", working_directory)
-        elapsed_seconds = seconds_since(started_at)
+        elapsed_seconds = time.time() - started_at
 
         local_output_md5 = compute_local_md5(os.path.join(working_directory, "output.bin"))
         sandbox_output_md5 = compute_sandbox_md5(sandbox, "/home/user/results/output.bin")
@@ -89,7 +113,7 @@ def download_from_sandbox(sandbox: Sandbox, working_directory: str, local_input_
             raise RuntimeError("the downloaded file checksum does not match the sandbox file")
         print(
             f"[sandbox -> laptop] {FILE_SIZE_MIB} MiB in {elapsed_seconds:.1f}s "
-            f"({format_megabits_per_second(FILE_SIZE_BYTES, elapsed_seconds)}), md5 ok"
+            f"({transfer_speed(FILE_SIZE_BYTES, elapsed_seconds)}), md5 ok"
         )
 
         run_local_tailcat("cp", f"{download_server.address}:transfer-report.json", working_directory)
@@ -110,6 +134,7 @@ def download_from_sandbox(sandbox: Sandbox, working_directory: str, local_input_
 
 
 def main() -> None:
+    sys.stdout.reconfigure(line_buffering=True)
     load_dotenv()
     require_local_tailcat()
     sandbox = create_sandbox()

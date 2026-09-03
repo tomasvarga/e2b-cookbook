@@ -6,30 +6,54 @@
  * Bytes flow over WireGuard through a DERP relay and never touch the E2B API.
  */
 import "dotenv/config";
-import { execFileSync } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { execFileSync, spawnSync } from "node:child_process";
+import { createHash, randomBytes } from "node:crypto";
 import { mkdtempSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Sandbox } from "e2b";
+import type { CommandResult } from "./e2bSandbox";
 import {
-  computeLocalMd5,
-  computeSandboxMd5,
+  assertCommandSucceeded,
   createSandbox,
-  describeConnection,
-  formatMegabitsPerSecond,
-  localCommandRunner,
+  runSandboxCommand,
+} from "./e2bSandbox";
+import {
   requireLocalTailcat,
-  secondsSince,
   startSandboxTailcatServer,
   waitUntilReachable,
-} from "./tailcatRuntime";
+} from "./tailcatServer";
 
 const FILE_SIZE_MIB = Number(process.env.DEMO_FILE_SIZE_MIB ?? 50);
 const FILE_SIZE_BYTES = FILE_SIZE_MIB * 1024 * 1024;
 
 function runLocalTailcat(...tailcatArguments: string[]): void {
   execFileSync("tailcat", tailcatArguments, { stdio: "inherit" });
+}
+
+function runLocalCommand(command: string): Promise<CommandResult> {
+  const result = spawnSync(command, { shell: true, encoding: "utf8" });
+  return Promise.resolve({
+    exitCode: result.status ?? 1,
+    output: (result.stdout ?? "") + (result.stderr ?? ""),
+  });
+}
+
+function computeLocalMd5(path: string): string {
+  return createHash("md5").update(readFileSync(path)).digest("hex");
+}
+
+async function computeSandboxMd5(
+  sandbox: Sandbox,
+  path: string,
+): Promise<string> {
+  const result = await runSandboxCommand(sandbox, `md5sum ${path}`);
+  assertCommandSucceeded(result);
+  return result.output.trim().split(/\s+/)[0] ?? "";
+}
+
+function transferSpeed(bytes: number, seconds: number): string {
+  return `${Math.round((bytes * 8) / seconds / 1e6)} Mbit/s`;
 }
 
 async function uploadToSandbox(
@@ -44,15 +68,15 @@ async function uploadToSandbox(
     "recv",
   );
   try {
-    await waitUntilReachable(localCommandRunner, uploadReceiver.address);
-    console.log(
-      "[laptop] " +
-        (await describeConnection(localCommandRunner, uploadReceiver.address)),
+    const connection = await waitUntilReachable(
+      runLocalCommand,
+      uploadReceiver.address,
     );
+    console.log(`[laptop] ${connection}`);
 
     const startedAt = Date.now();
     runLocalTailcat("cp", localFile, `${uploadReceiver.address}:`);
-    const elapsedSeconds = secondsSince(startedAt);
+    const elapsedSeconds = (Date.now() - startedAt) / 1000;
 
     const checksumMatches =
       (await computeSandboxMd5(sandbox, "/home/user/inbox/input.bin")) ===
@@ -65,8 +89,7 @@ async function uploadToSandbox(
     console.log(
       `[laptop -> sandbox] ${FILE_SIZE_MIB} MiB in ${elapsedSeconds.toFixed(
         1,
-      )}s ` +
-        `(${formatMegabitsPerSecond(FILE_SIZE_BYTES, elapsedSeconds)}), md5 ok`,
+      )}s ` + `(${transferSpeed(FILE_SIZE_BYTES, elapsedSeconds)}), md5 ok`,
     );
   } finally {
     await uploadReceiver.stop();
@@ -94,7 +117,7 @@ async function downloadFromSandbox(
     "files",
   );
   try {
-    await waitUntilReachable(localCommandRunner, downloadServer.address);
+    await waitUntilReachable(runLocalCommand, downloadServer.address);
 
     console.log("[laptop] tailcat ls -l <sandbox>:");
     runLocalTailcat("ls", "-l", downloadServer.address);
@@ -105,7 +128,7 @@ async function downloadFromSandbox(
       `${downloadServer.address}:output.bin`,
       workingDirectory,
     );
-    const elapsedSeconds = secondsSince(startedAt);
+    const elapsedSeconds = (Date.now() - startedAt) / 1000;
 
     const localOutputMd5 = computeLocalMd5(
       join(workingDirectory, "output.bin"),
@@ -123,8 +146,7 @@ async function downloadFromSandbox(
     console.log(
       `[sandbox -> laptop] ${FILE_SIZE_MIB} MiB in ${elapsedSeconds.toFixed(
         1,
-      )}s ` +
-        `(${formatMegabitsPerSecond(FILE_SIZE_BYTES, elapsedSeconds)}), md5 ok`,
+      )}s ` + `(${transferSpeed(FILE_SIZE_BYTES, elapsedSeconds)}), md5 ok`,
     );
 
     runLocalTailcat(

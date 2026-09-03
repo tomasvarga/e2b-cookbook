@@ -7,19 +7,19 @@ the producer's address to the consumer; file bytes do not pass through it.
 """
 
 import os
+import sys
 import time
 
 from dotenv import load_dotenv
+from e2b import Sandbox
 
-from .tailcat_runtime import (
-    compute_sandbox_md5,
+from .e2b_sandbox import (
+    assert_command_succeeded,
     create_sandbox,
-    create_sandbox_command_runner,
-    describe_connection,
-    format_megabits_per_second,
-    require_successful_command,
     run_sandbox_command,
-    seconds_since,
+    sandbox_command_runner,
+)
+from .tailcat_server import (
     start_sandbox_tailcat_server,
     wait_until_reachable,
 )
@@ -28,7 +28,18 @@ FILE_SIZE_MIB = int(os.environ.get("DEMO_FILE_SIZE_MIB", "10"))
 FILE_SIZE_BYTES = FILE_SIZE_MIB * 1024 * 1024
 
 
+def compute_sandbox_md5(sandbox: Sandbox, path: str) -> str:
+    result = run_sandbox_command(sandbox, f"md5sum {path}")
+    assert_command_succeeded(result)
+    return result.output.split()[0]
+
+
+def transfer_speed(size_bytes: int, seconds: float) -> str:
+    return f"{size_bytes * 8 / seconds / 1e6:.0f} Mbit/s"
+
+
 def main() -> None:
+    sys.stdout.reconfigure(line_buffering=True)
     load_dotenv()
     producer_sandbox = create_sandbox()
     consumer_sandbox = create_sandbox()
@@ -43,19 +54,19 @@ def main() -> None:
         try:
 
             # Consumer: connect using only the address string.
-            run_in_consumer = create_sandbox_command_runner(consumer_sandbox, timeout_seconds=300)
-            wait_until_reachable(run_in_consumer, shared_directory_server.address)
-            print("[consumer] " + describe_connection(run_in_consumer, shared_directory_server.address))
+            run_in_consumer = sandbox_command_runner(consumer_sandbox, timeout_seconds=300)
+            connection = wait_until_reachable(run_in_consumer, shared_directory_server.address)
+            print(f"[consumer] {connection}")
 
             directory_listing = run_in_consumer(f"tailcat ls -l {shared_directory_server.address}")
-            require_successful_command(directory_listing)
+            assert_command_succeeded(directory_listing)
             print("[consumer] tailcat ls -l <producer>:\n" + directory_listing.output.strip())
 
             started_at = time.time()
-            require_successful_command(
+            assert_command_succeeded(
                 run_in_consumer(f"tailcat cp {shared_directory_server.address}:dataset.bin /home/user/dataset.bin")
             )
-            elapsed_seconds = seconds_since(started_at)
+            elapsed_seconds = time.time() - started_at
             checksum_matches = compute_sandbox_md5(consumer_sandbox, "/home/user/dataset.bin") == compute_sandbox_md5(
                 producer_sandbox, "/home/user/share/dataset.bin"
             )
@@ -63,7 +74,7 @@ def main() -> None:
                 raise RuntimeError("the dataset checksum differs between the producer and consumer")
             print(
                 f"[producer -> consumer] {FILE_SIZE_MIB} MiB in {elapsed_seconds:.1f}s "
-                f"({format_megabits_per_second(FILE_SIZE_BYTES, elapsed_seconds)}), md5 ok"
+                f"({transfer_speed(FILE_SIZE_BYTES, elapsed_seconds)}), md5 ok"
             )
 
             # Consumer: analyze the dataset, then push a useful result back to the producer.
@@ -73,16 +84,16 @@ def main() -> None:
                 "\"generatedBy\":\"worker-sandbox\",\"sha256\":\"%s\"}\\n' "
                 '"$checksum" > /home/user/analysis-report.json'
             )
-            require_successful_command(analysis)
+            assert_command_succeeded(analysis)
             started_at = time.time()
-            require_successful_command(
+            assert_command_succeeded(
                 run_in_consumer(f"tailcat cp /home/user/analysis-report.json {shared_directory_server.address}:")
             )
-            elapsed_seconds = seconds_since(started_at)
+            elapsed_seconds = time.time() - started_at
             processed_result = run_sandbox_command(
                 producer_sandbox, "python3 -m json.tool /home/user/share/analysis-report.json"
             )
-            require_successful_command(processed_result)
+            assert_command_succeeded(processed_result)
             print(f"[consumer -> producer] analysis-report.json returned in {elapsed_seconds:.1f}s")
             print("\nFinal report:\n" + processed_result.output.strip())
 
@@ -93,12 +104,12 @@ def main() -> None:
             )
             try:
                 wait_until_reachable(run_in_consumer, stream_receiver.address)
-                require_successful_command(
+                assert_command_succeeded(
                     run_in_consumer(f"seq 1 5 | sed 's/^/log line /' | tailcat {stream_receiver.address}")
                 )
                 time.sleep(1)
                 received_stream = run_sandbox_command(producer_sandbox, "cat /home/user/share/stream.log")
-                require_successful_command(received_stream)
+                assert_command_succeeded(received_stream)
                 print("[consumer -> producer stream] producer received:\n" + received_stream.output.strip())
             finally:
                 stream_receiver.stop()

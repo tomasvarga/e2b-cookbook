@@ -14,17 +14,19 @@ import http.server
 import json
 import os
 import socketserver
+import sys
 import threading
 
 from dotenv import load_dotenv
 
-from .tailcat_runtime import (
+from .e2b_sandbox import (
     CommandResult,
     CommandRunner,
+    assert_command_succeeded,
     create_sandbox,
-    create_sandbox_command_runner,
-    describe_connection,
-    require_successful_command,
+    sandbox_command_runner,
+)
+from .tailcat_server import (
     start_local_tailcat_server,
     wait_until_reachable,
 )
@@ -58,7 +60,7 @@ def serve_local_http() -> socketserver.TCPServer:
 
 
 def report_successful_check(label: str, result: CommandResult, expected: dict) -> None:
-    require_successful_command(result)
+    assert_command_succeeded(result)
     actual = json.loads(result.output.strip())
     if actual != expected:
         raise RuntimeError(f"{label}: unexpected response {result.output.strip()}")
@@ -100,25 +102,26 @@ def verify_other_identities_are_rejected(run_in_sandbox: CommandRunner, laptop_a
 
 
 def main() -> None:
+    sys.stdout.reconfigure(line_buffering=True)
     load_dotenv()
     local_http_server = serve_local_http()
     print(f"[laptop] local development server listening on http://127.0.0.1:{LOCAL_PORT}")
     sandbox = create_sandbox()
     try:
-        run_in_sandbox = create_sandbox_command_runner(sandbox, timeout_seconds=120)
+        run_in_sandbox = sandbox_command_runner(sandbox, timeout_seconds=120)
 
         # The sandbox gets its own identity; the laptop only admits that key.
         key_generation = run_in_sandbox(
             "tailcat genkey --client --key=client-default 2>/dev/null | grep -o 'nodekey:[0-9a-f]*'"
         )
-        require_successful_command(key_generation)
+        assert_command_succeeded(key_generation)
         sandbox_client_public_key = key_generation.output.strip()
         print(f"[sandbox] client key {sandbox_client_public_key[:24]}…")
 
         laptop_tailcat_server = start_local_tailcat_server(f"serve --allow={sandbox_client_public_key} {LOCAL_PORT}")
         try:
-            wait_until_reachable(run_in_sandbox, laptop_tailcat_server.address)
-            print("[sandbox] " + describe_connection(run_in_sandbox, laptop_tailcat_server.address))
+            connection = wait_until_reachable(run_in_sandbox, laptop_tailcat_server.address)
+            print(f"[sandbox] {connection}")
             print("\nTesting the development server on your laptop...\n")
 
             test_through_socks(run_in_sandbox, laptop_tailcat_server.address)

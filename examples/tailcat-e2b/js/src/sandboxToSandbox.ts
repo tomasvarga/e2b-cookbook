@@ -8,21 +8,30 @@
  */
 import "dotenv/config";
 import { setTimeout as delay } from "node:timers/promises";
+import type { Sandbox } from "e2b";
 import {
-  computeSandboxMd5,
+  assertCommandSucceeded,
   createSandbox,
-  createSandboxCommandRunner,
-  describeConnection,
-  formatMegabitsPerSecond,
-  requireSuccessfulCommand,
   runSandboxCommand,
-  secondsSince,
-  startSandboxTailcatServer,
-  waitUntilReachable,
-} from "./tailcatRuntime";
+  sandboxCommandRunner,
+} from "./e2bSandbox";
+import { startSandboxTailcatServer, waitUntilReachable } from "./tailcatServer";
 
 const FILE_SIZE_MIB = Number(process.env.DEMO_FILE_SIZE_MIB ?? 10);
 const FILE_SIZE_BYTES = FILE_SIZE_MIB * 1024 * 1024;
+
+async function computeSandboxMd5(
+  sandbox: Sandbox,
+  path: string,
+): Promise<string> {
+  const result = await runSandboxCommand(sandbox, `md5sum ${path}`);
+  assertCommandSucceeded(result);
+  return result.output.trim().split(/\s+/)[0] ?? "";
+}
+
+function transferSpeed(bytes: number, seconds: number): string {
+  return `${Math.round((bytes * 8) / seconds / 1e6)} Mbit/s`;
+}
 
 const producerSandbox = await createSandbox();
 const consumerSandbox = await createSandbox();
@@ -38,31 +47,28 @@ try {
   );
   try {
     // Consumer: connect using only the address string.
-    const runInConsumer = createSandboxCommandRunner(consumerSandbox, 300_000);
-    await waitUntilReachable(runInConsumer, sharedDirectoryServer.address);
-    console.log(
-      "[consumer] " +
-        (await describeConnection(
-          runInConsumer,
-          sharedDirectoryServer.address,
-        )),
+    const runInConsumer = sandboxCommandRunner(consumerSandbox, 300_000);
+    const connection = await waitUntilReachable(
+      runInConsumer,
+      sharedDirectoryServer.address,
     );
+    console.log(`[consumer] ${connection}`);
 
     const directoryListing = await runInConsumer(
       `tailcat ls -l ${sharedDirectoryServer.address}`,
     );
-    requireSuccessfulCommand(directoryListing);
+    assertCommandSucceeded(directoryListing);
     console.log(
       "[consumer] tailcat ls -l <producer>:\n" + directoryListing.output.trim(),
     );
 
     let startedAt = Date.now();
-    requireSuccessfulCommand(
+    assertCommandSucceeded(
       await runInConsumer(
         `tailcat cp ${sharedDirectoryServer.address}:dataset.bin /home/user/dataset.bin`,
       ),
     );
-    let elapsedSeconds = secondsSince(startedAt);
+    let elapsedSeconds = (Date.now() - startedAt) / 1000;
     const checksumMatches =
       (await computeSandboxMd5(consumerSandbox, "/home/user/dataset.bin")) ===
       (await computeSandboxMd5(
@@ -77,8 +83,7 @@ try {
     console.log(
       `[producer -> consumer] ${FILE_SIZE_MIB} MiB in ${elapsedSeconds.toFixed(
         1,
-      )}s ` +
-        `(${formatMegabitsPerSecond(FILE_SIZE_BYTES, elapsedSeconds)}), md5 ok`,
+      )}s ` + `(${transferSpeed(FILE_SIZE_BYTES, elapsedSeconds)}), md5 ok`,
     );
 
     // Consumer: analyze the dataset, then push a useful result back to the producer.
@@ -87,19 +92,19 @@ try {
         `printf '{"bytesProcessed":${FILE_SIZE_BYTES},"status":"complete","generatedBy":"worker-sandbox","sha256":"%s"}\n' ` +
         `"$checksum" > /home/user/analysis-report.json`,
     );
-    requireSuccessfulCommand(analysis);
+    assertCommandSucceeded(analysis);
     startedAt = Date.now();
-    requireSuccessfulCommand(
+    assertCommandSucceeded(
       await runInConsumer(
         `tailcat cp /home/user/analysis-report.json ${sharedDirectoryServer.address}:`,
       ),
     );
-    elapsedSeconds = secondsSince(startedAt);
+    elapsedSeconds = (Date.now() - startedAt) / 1000;
     const processedResult = await runSandboxCommand(
       producerSandbox,
       "python3 -m json.tool /home/user/share/analysis-report.json",
     );
-    requireSuccessfulCommand(processedResult);
+    assertCommandSucceeded(processedResult);
     console.log(
       `[consumer -> producer] analysis-report.json returned in ${elapsedSeconds.toFixed(
         1,
@@ -119,7 +124,7 @@ try {
     );
     try {
       await waitUntilReachable(runInConsumer, streamReceiver.address);
-      requireSuccessfulCommand(
+      assertCommandSucceeded(
         await runInConsumer(
           `seq 1 5 | sed 's/^/log line /' | tailcat ${streamReceiver.address}`,
         ),
@@ -129,7 +134,7 @@ try {
         producerSandbox,
         "cat /home/user/share/stream.log",
       );
-      requireSuccessfulCommand(receivedStream);
+      assertCommandSucceeded(receivedStream);
       console.log(
         "[consumer -> producer stream] producer received:\n" +
           receivedStream.output.trim(),

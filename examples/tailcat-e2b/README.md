@@ -50,7 +50,7 @@ poetry run sandbox-tests-local-dev-server
 
 ## What happens in each demo
 
-The runnable scripts stay under 140 lines in both languages. They read like orchestration code; the roughly 280-line `tailcatRuntime` / `tailcat_runtime` module owns process management, retries and E2B-specific setup.
+The runnable scripts are 124–155 lines in Python and 151–191 lines in TypeScript. They are deliberately a little longer so the Tailcat commands, checksums, timing and result handling stay visible where they are used. Reusable infrastructure is split by responsibility: `e2bSandbox` adapts the E2B SDK, while `tailcatServer` owns listener processes and address readiness.
 
 ### Laptop and sandbox exchange files
 
@@ -109,15 +109,17 @@ This is the most practical agent-development example: code running remotely can 
 js/                                   python/
 ├── template/template.ts              ├── tailcat_e2b/template.py          the sandbox template
 ├── template/build.ts                 ├── tailcat_e2b/build_template.py    Template.build(alias="tailcat")
-├── src/tailcatRuntime.ts              ├── tailcat_e2b/tailcat_runtime.py   shared helper
+├── src/e2bSandbox.ts                  ├── tailcat_e2b/e2b_sandbox.py       E2B lifecycle + command adapter
+├── src/tailcatServer.ts               ├── tailcat_e2b/tailcat_server.py    listener lifecycle + readiness
 ├── src/laptopSandboxFileTransfer.ts  ├── tailcat_e2b/laptop_sandbox_file_transfer.py
 ├── src/sandboxToSandbox.ts           ├── tailcat_e2b/sandbox_to_sandbox.py
 └── src/sandboxTestsLocalDevServer.ts └── tailcat_e2b/sandbox_tests_local_dev_server.py
 ```
 
 - The **template** installs tailcat from the GitHub release, plus `openssh-client` (tailcat drives the system scp and ssh), `socat` for local port forwarding, and Python for formatting the generated JSON report.
-- The **helper** starts a listener in a sandbox or on the laptop, returns its address, waits until it answers through DERP, and provides the small command and checksum utilities shared by the demos.
-- Each **script** is a short program that wires these together. The two languages are line-for-line ports of each other.
+- **e2bSandbox** creates the sandbox and turns E2B command results into a small, consistent shape.
+- **tailcatServer** starts a listener in a sandbox or on the laptop, reads its address and waits until it answers through DERP.
+- Each **script** keeps its Tailcat client commands, checksums, timing and result handling beside the flow they explain. The two languages follow the same steps without forcing line-for-line parity.
 
 ## Quirks you need to know about
 

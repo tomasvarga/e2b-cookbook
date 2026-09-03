@@ -20,13 +20,11 @@ import {
 import {
   type CommandResult,
   type CommandRunner,
+  assertCommandSucceeded,
   createSandbox,
-  createSandboxCommandRunner,
-  describeConnection,
-  requireSuccessfulCommand,
-  startLocalTailcatServer,
-  waitUntilReachable,
-} from "./tailcatRuntime";
+  sandboxCommandRunner,
+} from "./e2bSandbox";
+import { startLocalTailcatServer, waitUntilReachable } from "./tailcatServer";
 
 const LOCAL_PORT = Number(process.env.DEMO_LOCAL_PORT ?? 8765);
 
@@ -57,7 +55,7 @@ function reportSuccessfulCheck(
   result: CommandResult,
   expectedResponse: string,
 ): void {
-  requireSuccessfulCommand(result);
+  assertCommandSucceeded(result);
   if (result.output.trim() !== expectedResponse) {
     throw new Error(`${label}: unexpected response ${result.output.trim()}`);
   }
@@ -127,13 +125,13 @@ console.log(
 
 const sandbox = await createSandbox();
 try {
-  const runInSandbox = createSandboxCommandRunner(sandbox, 120_000);
+  const runInSandbox = sandboxCommandRunner(sandbox, 120_000);
 
   // The sandbox gets its own identity; the laptop only admits that key.
   const keyGeneration = await runInSandbox(
     "tailcat genkey --client --key=client-default 2>/dev/null | grep -o 'nodekey:[0-9a-f]*'",
   );
-  requireSuccessfulCommand(keyGeneration);
+  assertCommandSucceeded(keyGeneration);
   const sandboxClientPublicKey = keyGeneration.output.trim();
   console.log(`[sandbox] client key ${sandboxClientPublicKey.slice(0, 24)}…`);
 
@@ -141,11 +139,11 @@ try {
     `serve --allow=${sandboxClientPublicKey} ${LOCAL_PORT}`,
   );
   try {
-    await waitUntilReachable(runInSandbox, laptopTailcatServer.address);
-    console.log(
-      "[sandbox] " +
-        (await describeConnection(runInSandbox, laptopTailcatServer.address)),
+    const connection = await waitUntilReachable(
+      runInSandbox,
+      laptopTailcatServer.address,
     );
+    console.log(`[sandbox] ${connection}`);
     console.log("\nTesting the development server on your laptop...\n");
 
     await testThroughSocks(runInSandbox, laptopTailcatServer.address);
