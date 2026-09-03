@@ -52,6 +52,9 @@ const scripts: {
   { name: 'openai-image-analysis-js', interpreter: 'npm', file: './examples/openai-image-analysis-js/' },
   { name: 'codestral-code-interpreter-python', interpreter: 'jupyter', file: './examples/codestral-code-interpreter-python/codestral_code_interpreter.ipynb' },
   { name: 'hello-world-python', interpreter: 'poetry', file: './examples/hello-world-python/' },
+  // Runs the sandbox-to-sandbox demo; the laptop demos need tailcat on the host and are not covered.
+  { name: 'tailcat-e2b-js', interpreter: 'npm', file: './examples/tailcat-e2b/js/' },
+  { name: 'tailcat-e2b-python', interpreter: 'poetry', file: './examples/tailcat-e2b/python/' },
   { name: 'openai-ml-dataset-js', interpreter: 'npm', file: './examples/openai-ml-dataset-js/' },
   { name: 'openai-image-analysis-python', interpreter: 'jupyter', file: './examples/openai-image-analysis-python/image_analysis.ipynb' },
   { name: 'together-ai-code-interpreter-python', interpreter: 'jupyter', file: './examples/together-ai-code-interpreter-python/together_with_e2b_code_interpreter.ipynb' },
@@ -187,12 +190,15 @@ const TEMPLATE_USED_BY: Record<string, string> = {
   'mcp-custom-template-js': 'browserbase-mcp-gateway',
   'docker-in-e2b-js': 'e2b-with-docker',
   'docker-in-e2b-python': 'e2b-with-docker',
+  'tailcat-e2b-js': 'tailcat',
+  'tailcat-e2b-python': 'tailcat',
 }
 
 const TEMPLATE_BUILDS: TemplateBuild[] = [
   { alias: 'playwright-chromium', dir: './examples/playwright-in-e2b/', interpreter: 'npm', build: 'npm run e2b:build:prod' },
   { alias: 'anthropic-claude-code', dir: './examples/anthropic-claude-code-in-sandbox-js/', interpreter: 'npm', build: 'npm run e2b:build:prod' },
   { alias: 'e2b-with-docker', dir: './examples/docker-in-e2b/js/', interpreter: 'npm', build: 'npm run e2b:build:prod' },
+  { alias: 'tailcat', dir: './examples/tailcat-e2b/js/', interpreter: 'npm', build: 'npm run e2b:build' },
   { alias: 'browserbase-mcp-gateway', dir: './examples/mcp-custom-template-js/', interpreter: 'npm', build: 'npm run build' },
   { alias: 'openai-codex', dir: './examples/openai-codex-in-sandbox-python/', interpreter: 'uv', build: 'uv run build_prod.py' },
 ]
