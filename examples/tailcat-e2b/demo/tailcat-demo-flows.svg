@@ -1,0 +1,120 @@
+<svg viewBox="0 0 1800 1500" xmlns="http://www.w3.org/2000/svg" font-family="Arial,Helvetica,sans-serif">
+<rect width="1800" height="1500" fill="#0d1117"/>
+<text x="900" y="60" text-anchor="middle" fill="#f0f6fc" font-size="40" font-weight="700">Tailcat + E2B: three private networking flows</text>
+<text x="900" y="95" text-anchor="middle" fill="#8b949e" font-size="24">Encrypted connections using only a Tailcat address — no public ingress</text>
+
+<!-- PANEL 1 -->
+<rect x="60" y="140" width="1680" height="380" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2" filter="url(#shadow)"/>
+<text x="90" y="185" fill="#58d6e7" font-size="28" font-weight="700">Panel 1 — Laptop ↔ Sandbox Files</text>
+
+<rect x="90" y="220" width="260" height="260" rx="14" fill="#0d1117" stroke="#58d6e7" stroke-width="2"/>
+<circle cx="120" cy="255" r="16" fill="#58d6e7"/><text x="120" y="262" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">1</text>
+<text x="220" y="262" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Laptop</text>
+<text x="220" y="300" text-anchor="middle" fill="#c9d1d9" font-size="24">input.bin</text>
+<text x="220" y="330" text-anchor="middle" fill="#8b949e" font-size="24">50 MiB</text>
+
+<path d="M370 300 L570 300" stroke="#58d6e7" stroke-width="3" marker-end="url(#arrC)"/>
+<text x="470" y="285" text-anchor="middle" fill="#58d6e7" font-size="24">tailcat cp upload</text>
+
+<rect x="590" y="220" width="300" height="260" rx="14" fill="#0d1117" stroke="#a78bfa" stroke-width="2"/>
+<circle cx="620" cy="255" r="16" fill="#a78bfa"/><text x="620" y="262" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">2</text>
+<text x="740" y="262" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Sandbox</text>
+<text x="740" y="300" text-anchor="middle" fill="#c9d1d9" font-size="24">write-only receiver</text>
+<text x="740" y="335" text-anchor="middle" fill="#56d364" font-size="24">MD5 verified ✓</text>
+<text x="740" y="375" text-anchor="middle" fill="#c9d1d9" font-size="24">creates output.bin +</text>
+<text x="740" y="405" text-anchor="middle" fill="#c9d1d9" font-size="24">transfer-report.json</text>
+
+<path d="M910 300 L1110 300" stroke="#a78bfa" stroke-width="3" marker-end="url(#arrP)"/>
+<text x="1010" y="285" text-anchor="middle" fill="#a78bfa" font-size="24">read-only server</text>
+
+<rect x="1130" y="220" width="300" height="260" rx="14" fill="#0d1117" stroke="#e3b341" stroke-width="2"/>
+<circle cx="1160" cy="255" r="16" fill="#e3b341"/><text x="1160" y="262" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">3</text>
+<text x="1290" y="262" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Laptop</text>
+<text x="1290" y="300" text-anchor="middle" fill="#c9d1d9" font-size="24">downloads output.bin</text>
+<text x="1290" y="335" text-anchor="middle" fill="#c9d1d9" font-size="24">+ transfer-report.json</text>
+<text x="1290" y="380" text-anchor="middle" fill="#56d364" font-size="24">both artifacts verified</text>
+
+<!-- PANEL 2 -->
+<rect x="60" y="560" width="1680" height="420" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2" filter="url(#shadow)"/>
+<text x="90" y="605" fill="#56d364" font-size="28" font-weight="700">Panel 2 — Sandbox ↔ Sandbox Processing</text>
+<rect x="1350" y="580" width="360" height="40" rx="20" fill="#0d1117" stroke="#56d364" stroke-width="2"/>
+<text x="1530" y="606" text-anchor="middle" fill="#56d364" font-size="20">No laptop Tailcat required</text>
+
+<rect x="90" y="650" width="300" height="250" rx="14" fill="#0d1117" stroke="#58d6e7" stroke-width="2"/>
+<circle cx="120" cy="675" r="16" fill="#58d6e7"/><text x="120" y="682" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">1</text>
+<text x="240" y="682" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Producer</text>
+<text x="240" y="720" text-anchor="middle" fill="#c9d1d9" font-size="24">dataset.bin</text>
+<text x="240" y="750" text-anchor="middle" fill="#8b949e" font-size="24">100 MiB</text>
+<text x="240" y="810" text-anchor="middle" fill="#c9d1d9" font-size="22">read-write Tailcat</text>
+<text x="240" y="840" text-anchor="middle" fill="#c9d1d9" font-size="22">file server</text>
+
+<path d="M410 755 L630 755" stroke="#56d364" stroke-width="3" marker-end="url(#arrG)"/>
+<text x="520" y="735" text-anchor="middle" fill="#56d364" font-size="22">direct Tailcat copy</text>
+
+<rect x="650" y="650" width="350" height="250" rx="14" fill="#0d1117" stroke="#a78bfa" stroke-width="2"/>
+<circle cx="680" cy="685" r="16" fill="#a78bfa"/><text x="680" y="692" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">2</text>
+<text x="825" y="692" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Consumer</text>
+<text x="825" y="735" text-anchor="middle" fill="#56d364" font-size="24">MD5 verified ✓</text>
+<text x="825" y="775" text-anchor="middle" fill="#c9d1d9" font-size="24">SHA-256 analysis</text>
+<text x="825" y="825" text-anchor="middle" fill="#c9d1d9" font-size="22">creates report</text>
+<text x="825" y="855" text-anchor="middle" fill="#c9d1d9" font-size="22">and streams logs</text>
+
+<path d="M1020 720 L1230 720" stroke="#a78bfa" stroke-width="3" marker-end="url(#arrP)"/>
+<text x="1125" y="700" text-anchor="middle" fill="#a78bfa" font-size="22">return report</text>
+<path d="M1020 825 L1230 825" stroke="#e3b341" stroke-width="3" marker-end="url(#arrYRight)"/>
+<text x="1125" y="805" text-anchor="middle" fill="#e3b341" font-size="22">stream logs</text>
+
+<rect x="1250" y="650" width="400" height="250" rx="14" fill="#0d1117" stroke="#56d364" stroke-width="2"/>
+<circle cx="1280" cy="685" r="16" fill="#56d364"/><text x="1280" y="692" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">3</text>
+<text x="1450" y="692" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Producer receives</text>
+<text x="1450" y="740" text-anchor="middle" fill="#c9d1d9" font-size="24">analysis-report.json</text>
+<text x="1450" y="785" text-anchor="middle" fill="#c9d1d9" font-size="24">log line 1 … 5</text>
+<text x="1450" y="840" text-anchor="middle" fill="#56d364" font-size="24">result visible ✓</text>
+
+<!-- PANEL 3 -->
+<rect x="60" y="1000" width="1680" height="460" rx="18" fill="#161b22" stroke="#30363d" stroke-width="2" filter="url(#shadow)"/>
+<text x="90" y="1045" fill="#e3b341" font-size="28" font-weight="700">Panel 3 — Sandbox Tests a Laptop-Local Service</text>
+<rect x="90" y="1090" width="420" height="250" rx="14" fill="#0d1117" stroke="#58d6e7" stroke-width="2"/>
+<circle cx="120" cy="1125" r="16" fill="#58d6e7"/><text x="120" y="1132" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">1</text>
+<text x="300" y="1132" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Sandbox tests</text>
+<text x="300" y="1175" text-anchor="middle" fill="#c9d1d9" font-size="22">SOCKS: /health, /api/project</text>
+<text x="300" y="1215" text-anchor="middle" fill="#c9d1d9" font-size="22">Forwarded port: /api/check</text>
+<text x="300" y="1270" text-anchor="middle" fill="#56d364" font-size="24">expected responses ✓</text>
+
+<path d="M530 1190 L720 1190" stroke="#a78bfa" stroke-width="3" marker-end="url(#arrP)"/>
+<text x="625" y="1170" text-anchor="middle" fill="#a78bfa" font-size="20">encrypted request</text>
+
+<rect x="740" y="1090" width="330" height="250" rx="14" fill="#0d1117" stroke="#a78bfa" stroke-width="2"/>
+<circle cx="770" cy="1125" r="16" fill="#a78bfa"/><text x="770" y="1132" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">2</text>
+<text x="905" y="1132" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Tailcat gate</text>
+<text x="905" y="1180" text-anchor="middle" fill="#c9d1d9" font-size="22">listener allows only</text>
+<text x="905" y="1220" text-anchor="middle" fill="#58d6e7" font-size="24">sandbox public key</text>
+<text x="905" y="1270" text-anchor="middle" fill="#56d364" font-size="22">identity accepted ✓</text>
+
+<path d="M1090 1190 L1270 1190" stroke="#58d6e7" stroke-width="3" marker-end="url(#arrC)"/>
+<text x="1180" y="1170" text-anchor="middle" fill="#58d6e7" font-size="20">local TCP</text>
+
+<rect x="1290" y="1090" width="360" height="250" rx="14" fill="#0d1117" stroke="#e3b341" stroke-width="2"/>
+<circle cx="1320" cy="1125" r="16" fill="#e3b341"/><text x="1320" y="1132" text-anchor="middle" fill="#0d1117" font-size="18" font-weight="700">3</text>
+<text x="1470" y="1132" text-anchor="middle" fill="#f0f6fc" font-size="26" font-weight="700">Laptop-local API</text>
+<text x="1470" y="1180" text-anchor="middle" fill="#c9d1d9" font-size="24">127.0.0.1:8765</text>
+<text x="1470" y="1225" text-anchor="middle" fill="#c9d1d9" font-size="22">never deployed</text>
+<text x="1470" y="1270" text-anchor="middle" fill="#c9d1d9" font-size="22">never public</text>
+
+<rect x="90" y="1370" width="330" height="58" rx="12" fill="#0d1117" stroke="#f85149" stroke-width="2"/>
+<text x="255" y="1407" text-anchor="middle" fill="#f85149" font-size="22">Different identity</text>
+<path d="M440 1400 C600 1400 620 1310 720 1290" fill="none" stroke="#f85149" stroke-width="3" stroke-dasharray="10 8" marker-end="url(#arrR)"/>
+<text x="575" y="1370" text-anchor="middle" fill="#f85149" font-size="20">rejected by allowlist</text>
+
+<rect x="1290" y="1370" width="360" height="58" rx="29" fill="#0d1117" stroke="#56d364" stroke-width="2"/>
+<text x="1470" y="1407" text-anchor="middle" fill="#56d364" font-size="22">4 checks passed ✓</text>
+
+<defs>
+<marker id="arrC" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#58d6e7"/></marker>
+<marker id="arrP" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a78bfa"/></marker>
+<marker id="arrG" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#56d364"/></marker>
+<marker id="arrYRight" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#e3b341"/></marker>
+<marker id="arrR" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#f85149"/></marker>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.28"/></filter>
+</defs>
+</svg>

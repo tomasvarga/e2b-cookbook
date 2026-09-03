@@ -14,6 +14,8 @@ Measured on 2026-09-02 with tailcat 0.4.0: sandbox to sandbox pings went from 39
 
 ![The TypeScript sandbox-to-sandbox demo transferring a dataset, returning an analysis report, and streaming logs](./demo/sandbox-to-sandbox.gif)
 
+![The three Tailcat networking flows: laptop-to-sandbox files, sandbox-to-sandbox processing, and testing a laptop-local service](./demo/tailcat-demo-flows.svg)
+
 ## Setup
 
 Both versions read `E2B_API_KEY` from a `.env` file (copy `.env.template`). `laptop-sandbox-file-transfer` and `sandbox-tests-local-dev-server` also need tailcat on your machine: `brew install tailcat`, or see the [install options](https://github.com/tailscale/tailcat#install).
