@@ -9,6 +9,10 @@
 <text x="80" y="70" font-family="monospace" font-size="20" letter-spacing="3" fill="#ff8748">TAILCAT + E2B</text>
 <text x="80" y="112" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="#ffffff">Three private networking flows</text>
 <text x="80" y="146" font-family="monospace" font-size="22" fill="#8b96a3">Encrypted connections using only an address — no public ingress</text>
+<line x1="1450" y1="92" x2="1510" y2="92" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<text x="1530" y="99" font-family="monospace" font-size="16" letter-spacing="1" fill="#ff8748">OUTBOUND / DATA</text>
+<line x1="1450" y1="132" x2="1510" y2="132" stroke="#b7c0cc" stroke-width="2.5" marker-end="url(#arrGray)"/>
+<text x="1530" y="139" font-family="monospace" font-size="16" letter-spacing="1" fill="#b7c0cc">RETURN / RESULT</text>
 
 <!-- FLOW 01 -->
 <rect x="60" y="200" width="1880" height="340" rx="10" fill="none" stroke="#2a333d" stroke-width="2"/>
@@ -33,9 +37,12 @@
 <text x="1490" y="396" font-family="monospace" font-size="18" fill="#8b96a3">creates output.bin</text>
 <text x="1490" y="422" font-family="monospace" font-size="18" fill="#8b96a3">creates transfer-report.json</text>
 
-<path d="M530,350 L790,350" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
-<path d="M1470,420 L1210,420" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
-<path d="M1210,420 L530,420" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<text x="660" y="323" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#ff8748">UPLOAD →</text>
+<path d="M545,340 L775,340" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<path d="M1225,340 L1455,340" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<text x="1340" y="413" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#b7c0cc">← DOWNLOAD</text>
+<path d="M1455,435 L1225,435" fill="none" stroke="#b7c0cc" stroke-width="2.5" marker-end="url(#arrGray)"/>
+<path d="M775,435 L545,435" fill="none" stroke="#b7c0cc" stroke-width="2.5" marker-end="url(#arrGray)"/>
 <text x="960" y="470" text-anchor="middle" font-family="monospace" font-size="16" fill="#8b96a3">output MD5 + complete report verified</text>
 
 <!-- FLOW 02 -->
@@ -60,13 +67,16 @@
 <text x="1490" y="778" font-family="monospace" font-size="18" fill="#8b96a3">SHA-256 analysis</text>
 <text x="1490" y="806" font-family="monospace" font-size="18" fill="#8b96a3">creates analysis-report.json</text>
 
-<text x="660" y="700" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#8b96a3">DATASET →</text>
-<path d="M530,730 L790,730" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<text x="660" y="705" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#ff8748">DATASET →</text>
+<path d="M545,730 L775,730" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<path d="M1225,730 L1455,730" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
 
-<text x="1130" y="850" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#8b96a3">← REPORT</text>
-<path d="M1470,870 L790,870" fill="none" stroke="#b7c0cc" stroke-width="2.5" marker-end="url(#arrGray)"/>
-<text x="1130" y="905" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#8b96a3">← log line 1 … 5</text>
-<path d="M1470,930 L790,930" fill="none" stroke="#b7c0cc" stroke-width="2.5" marker-end="url(#arrGray)"/>
+<text x="1340" y="832" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#b7c0cc">← REPORT</text>
+<path d="M1455,850 L1225,850" fill="none" stroke="#b7c0cc" stroke-width="2.5" marker-end="url(#arrGray)"/>
+<path d="M775,850 L545,850" fill="none" stroke="#b7c0cc" stroke-width="2.5" marker-end="url(#arrGray)"/>
+<text x="1340" y="877" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="2" fill="#8b96a3">← LOG STREAM</text>
+<path d="M1455,895 L1225,895" fill="none" stroke="#8b96a3" stroke-width="2.5" stroke-dasharray="8,7" marker-end="url(#arrGray)"/>
+<path d="M775,895 L545,895" fill="none" stroke="#8b96a3" stroke-width="2.5" stroke-dasharray="8,7" marker-end="url(#arrGray)"/>
 
 <text x="960" y="948" text-anchor="middle" font-family="monospace" font-size="17" fill="#b7c0cc">verified dataset · returned report · streamed logs</text>
 
@@ -91,14 +101,14 @@
 <text x="1490" y="1150" font-family="monospace" font-size="17" fill="#8b96a3">127.0.0.1:8765</text>
 <text x="1490" y="1176" font-family="monospace" font-size="17" fill="#8b96a3">never deployed · never public</text>
 
-<path d="M530,1135 L790,1135" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
-<path d="M1210,1135 L1470,1135" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<path d="M545,1135 L775,1135" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
+<path d="M1225,1135 L1455,1135" fill="none" stroke="#ff8748" stroke-width="2.5" marker-end="url(#arrOrange)"/>
 
 <rect x="110" y="1250" width="420" height="100" rx="6" fill="#151b22" stroke="#e05a4e" stroke-width="2"/>
 <text x="130" y="1278" font-family="monospace" font-size="16" fill="#e05a4e">ACTOR</text>
 <text x="130" y="1310" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#ffffff">Different identity</text>
 
-<path d="M530,1300 L790,1300" fill="none" stroke="#e05a4e" stroke-width="2.5" stroke-dasharray="6,6" marker-end="url(#arrRed)"/>
+<path d="M545,1300 L765,1300" fill="none" stroke="#e05a4e" stroke-width="2.5" stroke-dasharray="6,6" marker-end="url(#arrRed)"/>
 <line x1="820" y1="1280" x2="860" y2="1320" stroke="#e05a4e" stroke-width="3"/>
 <line x1="860" y1="1280" x2="820" y2="1320" stroke="#e05a4e" stroke-width="3"/>
 <text x="880" y="1305" font-family="monospace" font-size="17" fill="#e05a4e">rejected</text>
