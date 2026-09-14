@@ -1,0 +1,21 @@
+{
+  "name": "veris-e2b-js",
+  "version": "1.0.0",
+  "description": "A Claude agent whose Stripe calls run inside an E2B sandbox and are answered by a stateful Veris mock — real hostnames, unmodified code, and a receipt proving the calls happened.",
+  "scripts": {
+    "start": "tsx app.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.9.3",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
+    "@veris-ai/e2b": "^0.1.1",
+    "dotenv": "^17.4.2"
+  }
+}

@@ -34,10 +34,22 @@ Read more about E2B on the [E2B website](https://e2b.dev/?utm_source=github&utm_
   </thead>
   <tbody>
     <tr>
-      <td rowspan="5">OpenAI</td>
+      <td rowspan="7">OpenAI</td>
       <td>Agents SDK</td>
       <td>Agentic workflows running in E2B sandboxes</td>
       <td><a href="./examples/openai-agents-sdk">Python</a></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>Agents API</td>
+      <td>Full-stack workbench, one E2B sandbox per chat</td>
+      <td><a href="./examples/openai-agents-api-python-sdk">Python</a></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>Agents API</td>
+      <td>Webhook-managed sandbox lifecycle per session</td>
+      <td><a href="./examples/openai-agents-api-python-sdk-webhook-managed">Python</a></td>
       <td>-</td>
     </tr>
     <tr>
@@ -162,6 +174,12 @@ Read more about E2B on the [E2B website](https://e2b.dev/?utm_source=github&utm_
       <td>CrewAI</td>
       <td>CrewAI agent with sandboxed Python execution</td>
       <td><a href="./examples/crewai-python">Python</a></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a></td>
+      <td>Learn an incident-triage skill in one sandbox and apply it in a fresh session</td>
+      <td><a href="./examples/hermes-incident-playbook-python">Python</a></td>
       <td>-</td>
     </tr>
     <tr>
@@ -302,6 +320,7 @@ Read more about E2B on the [E2B website](https://e2b.dev/?utm_source=github&utm_
 - Map custom subdomains to your sandboxes - [TypeScript](./examples/custom-sandbox-domain-proxy)
 - Feedback analyst agent on Flue, publishing an HTML report from a sandbox - [TypeScript](./examples/flue-feedback-analyst-js)
 - Warm an E2B sandbox and rerun tests after adding a local regression case - [Python](./examples/crabbox-e2b-python)
+- Teach Hermes an incident-triage playbook and reuse it in a fresh session - [Python](./examples/hermes-incident-playbook-python)
 
 ## Running the examples as a test suite
 

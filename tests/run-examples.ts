@@ -126,15 +126,27 @@ const scripts: {
 //   mcp-browserbase-js (BROWSERBASE_API_KEY, BROWSERBASE_PROJECT_ID, GEMINI_API_KEY)
 //   mcp-research-agent-js (EXA_API_KEY)
 //   stirrup-python (its own auth header)
+//   veris-e2b-js (VERIS_API_KEY, VERIS_ENVIRONMENT_ID — Sandbox.create() provisions
+//     a Veris twin of the vendor stack, so it cannot run without a Veris account)
 // Orchestrates the external Crabbox CLI, which creates and reuses its own E2B
 // sandbox. Running it here would nest a live sandbox inside this runner, and the
 // suite does not install Crabbox. Its unit tests cover command order and cleanup;
 // the real provider lifecycle remains a separate, explicitly approved smoke:
 //   crabbox-e2b-python
+// Orchestrates Hermes inside the separately published `hermes` template and
+// makes two provider calls so the agent can create and reuse a skill. Its unit
+// tests cover orchestration and cleanup; template/inference remains a separate,
+// explicitly approved smoke because this repository has no OpenRouter secret:
+//   hermes-incident-playbook-python
 // Runs a long-lived agent/server process rather than a script that exits, so
 // this runner can only ever time out on them:
 //   flue-feedback-analyst-js, vercel-eve-feedback-analyst-js,
 //   nextjs-code-interpreter (next start), agentkit-coding-agent
+// OpenAI Agents API examples. The workbench is a Flask backend plus Vite
+// frontend that serve until killed; the webhook-managed one needs a publicly
+// reachable controller sandbox registered as an OpenAI webhook endpoint and
+// deploys its own E2B template. Neither is a script that exits on its own:
+//   openai-agents-api-python-sdk, openai-agents-api-python-sdk-webhook-managed
 
 const SANDBOX_TEST_DIRECTORY = '/home/user/example'
 const LOGS_DIRECTORY = 'logs'
