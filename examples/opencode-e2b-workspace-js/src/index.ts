@@ -13,8 +13,9 @@
  */
 import 'dotenv/config'
 import { spawn, type ChildProcess } from 'node:child_process'
+import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { mkdtemp, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import path from 'node:path'
 
 const PROJECT_DIR = path.resolve(process.env.PROJECT_DIR ?? 'demo-project') // the WIP project to open
@@ -52,7 +53,15 @@ const server: ChildProcess = spawn('opencode', ['serve', '--port', String(PORT)]
   },
   stdio: 'ignore',
 })
-process.on('exit', () => server.kill())
+server.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'ENOENT') console.error('`opencode` was not found on PATH. Install OpenCode 1.16+ first: https://opencode.ai/docs')
+  else console.error(error)
+  process.exit(1)
+})
+process.on('exit', () => {
+  server.kill()
+  rmSync(configDir, { recursive: true, force: true })
+})
 
 const base = `http://127.0.0.1:${PORT}`
 await waitFor(() => api('GET', '/global/health'), 'opencode to start')
@@ -67,15 +76,17 @@ step(`Using model ${model.providerID}/${model.modelID}`)
 
 step('Creating an E2B workspace (first run builds a template, ~1–2 min; later runs ~15 s)…')
 const workspace = await api('POST', '/experimental/workspace', { type: 'e2b', branch: null })
-await waitFor(async () => {
-  const statuses = await api('GET', '/experimental/workspace/status')
-  const mine = statuses.find((s: any) => s.workspaceID === workspace.id)
-  if (mine?.status === 'error') throw new Fatal('workspace failed to connect')
-  return mine?.status === 'connected' ? mine : undefined
-}, 'workspace to connect', 15 * 60_000)
-step(`Workspace ${workspace.name} is connected. Project path in the sandbox: ${workspace.directory}`)
 
+// From here on the sandbox exists and is billed, so everything runs inside try/finally.
 try {
+  await waitFor(async () => {
+    const statuses = await api('GET', '/experimental/workspace/status')
+    const mine = statuses.find((s: any) => s.workspaceID === workspace.id)
+    if (mine?.status === 'error') throw new Fatal('workspace failed to connect')
+    return mine?.status === 'connected' ? mine : undefined
+  }, 'workspace to connect', 15 * 60_000)
+  step(`Workspace ${workspace.name} is connected. Project path in the sandbox: ${workspace.directory}`)
+
   // --- a session that starts inside the sandbox ------------------------------------
 
   const remote = await api('POST', '/session', {}, { workspace: workspace.id })
@@ -103,7 +114,8 @@ try {
   // --- clean up ---------------------------------------------------------------------
 
   step('Removing the workspace and its sandbox…')
-  await api('DELETE', `/experimental/workspace/${workspace.id}`)
+  // Never let cleanup hide the error that got us here.
+  await api('DELETE', `/experimental/workspace/${workspace.id}`).catch((error) => console.error('workspace removal failed:', error))
   server.kill()
 }
 
@@ -137,11 +149,27 @@ async function resolveModel() {
     const [providerID, ...rest] = process.env.OPENCODE_MODEL.split('/')
     return { providerID, modelID: rest.join('/') }
   }
+  // Only credentials stored by `opencode auth login` reach the sandbox; a provider that is
+  // "connected" through a shell env var would work locally and fail inside the workspace.
+  const stored = storedAuthProviders()
   const providers = await api('GET', '/provider')
-  const provider = providers.all.find((p: any) => providers.connected.includes(p.id))
-  if (!provider) throw new Error('No provider is logged in. Run `opencode auth login` or set OPENCODE_MODEL.')
+  const provider = providers.all.find((p: any) => providers.connected.includes(p.id) && stored.has(p.id))
+  if (!provider) {
+    throw new Error('No provider is logged in with `opencode auth login`. Log in, or set OPENCODE_MODEL to a provider you are logged into.')
+  }
   const modelID = providers.default?.[provider.id] ?? Object.keys(provider.models)[0]
   return { providerID: provider.id, modelID }
+}
+
+/** Provider ids with credentials in OpenCode's auth store (what `opencode auth login` writes). */
+function storedAuthProviders(): Set<string> {
+  const file = path.join(process.env.XDG_DATA_HOME || path.join(homedir(), '.local', 'share'), 'opencode', 'auth.json')
+  if (!existsSync(file)) return new Set()
+  try {
+    return new Set(Object.keys(JSON.parse(readFileSync(file, 'utf8'))))
+  } catch {
+    return new Set()
+  }
 }
 
 async function waitFor<T>(check: () => Promise<T | undefined>, what: string, timeoutMs = 60_000): Promise<T> {
